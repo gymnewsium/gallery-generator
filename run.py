@@ -30,7 +30,7 @@ def run(folder):
         ]
     }
 
-    raw = json.dumps(data, indent=4)
+    raw = json.dumps(data, indent=4, ensure_ascii=False)
 
     print(raw)
 
