@@ -1,10 +1,13 @@
+"Generate gallery index file"
 import os
 import os.path
 import json
 
 def run(folder):
+    "Generate gallery index file for the folder specified"
+
     if not os.path.exists(folder):
-        raise Exception("Folder does not exist: {}".format(folder))
+        raise Exception(f"Folder does not exist: {folder}")
 
     baseurl = "https://img.gymnewsium.ch/"
 
