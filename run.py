@@ -1,7 +1,9 @@
 "Generate gallery index file"
+
 import os
 import os.path
 import json
+from PIL import Image
 
 def run(folder):
     "Generate gallery index file for the folder specified"
@@ -16,17 +18,21 @@ def run(folder):
 
     files = []
 
-    for file in os.listdir(folder):
-        if file.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
-            files.append(file)
+    for filename in os.listdir(folder):
+        if filename.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
+            imgpath = os.path.join(folder, filename)
+            im = Image.open(imgpath)
+            h, w = im.size
+            files.append((filename, {"height": h, "width": w, "ratio": w/h}))
 
     data = {
         "title": title,
         "images": [
             {
                 "url": baseurl+slug+"/"+filename.replace(" ", "%20"),
-                "author": filename.split(" - ")[0]
-            } for filename in files
+                "author": filename.split(" - ")[0],
+                "dimensions": dimensions,
+            } for filename, dimensions in files
         ]
     }
 
