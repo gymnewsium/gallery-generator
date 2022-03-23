@@ -5,6 +5,14 @@ import os.path
 import json
 from PIL import Image
 
+def get_img_dimensions(img_path):
+    "Get image dimensions"
+
+    image = Image.open(img_path)
+
+    w, h = image.size
+    return {"width": w, "height": h, "ratio": w/h}
+
 def run(folder):
     "Generate gallery index file for the folder specified"
 
@@ -19,11 +27,11 @@ def run(folder):
     files = []
 
     for filename in os.listdir(folder):
-        if filename.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
-            imgpath = os.path.join(folder, filename)
-            im = Image.open(imgpath)
-            h, w = im.size
-            files.append((filename, {"height": h, "width": w, "ratio": w/h}))
+        if not filename.startswith("_") and not filename.startswith("preview"):
+            if filename.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
+                imgpath = os.path.join(folder, filename)
+                dimensions = get_img_dimensions(imgpath)
+                files.append((filename, dimensions))
 
     data = {
         "title": title,
