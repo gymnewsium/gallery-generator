@@ -1,8 +1,10 @@
 "Generate gallery index file"
 
+import sys
 import os
 import os.path
 import json
+import random
 from PIL import Image
 
 def get_img_dimensions(img_path):
@@ -33,22 +35,31 @@ def run(folder):
                 dimensions = get_img_dimensions(imgpath)
                 files.append((filename, dimensions))
 
+    images = [
+        {
+            "url": baseurl+slug+"/"+filename.replace(" ", "%20"),
+            "author": filename.split(" - ")[0],
+            "dimensions": dimensions,
+        } for filename, dimensions in files
+    ]
+
+    while True:
+        print(json.dumps(images, indent=4, ensure_ascii=False))
+        inp = input("Press enter to shuffle, q and enter to quit or s and enter to save: ")
+
+        if inp == "":
+            random.shuffle(images)
+        elif inp == "q":
+            sys.exit()
+        elif inp == "s":
+            break
+
     data = {
         "title": title,
-        "images": [
-            {
-                "url": baseurl+slug+"/"+filename.replace(" ", "%20"),
-                "author": filename.split(" - ")[0],
-                "dimensions": dimensions,
-            } for filename, dimensions in files
-        ]
+        "images": images,
     }
 
     raw = json.dumps(data, indent=4, ensure_ascii=False)
-
-    print(raw)
-
-    input("Press enter to write...")
 
     with open(folder+os.path.sep+"index.json", "w+", encoding="utf-8") as file:
         file.write(raw)
