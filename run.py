@@ -15,6 +15,20 @@ def get_img_dimensions(img_path):
     w, h = image.size
     return {"width": w, "height": h, "ratio": w/h}
 
+def get_file_info(filename):
+    sp = filename.split(" - ")
+    author = sp[0]
+    title = sp[1].split(".")[0]
+
+    if title.isdigit():
+        return {
+            "author": author,
+        }
+    return {
+        "author": author,
+        "title": title,
+    }
+
 def run(folder):
     "Generate gallery index file for the folder specified"
 
@@ -38,8 +52,8 @@ def run(folder):
     images = [
         {
             "url": baseurl+slug+"/"+filename.replace(" ", "%20"),
-            "author": filename.split(" - ")[0],
             "dimensions": dimensions,
+            **get_file_info(filename),
         } for filename, dimensions in files
     ]
 
