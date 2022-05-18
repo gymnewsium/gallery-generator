@@ -18,15 +18,15 @@ def get_img_dimensions(img_path):
 def get_file_info(filename):
     sp = filename.split(" - ")
     author = sp[0]
-    title = sp[1].split(".")[0]
+    caption = sp[1].split(".")[0]
 
-    if title.isdigit():
+    if caption.isdigit():
         return {
             "author": author,
         }
     return {
         "author": author,
-        "title": title,
+        "caption": caption,
     }
 
 def run(folder):
