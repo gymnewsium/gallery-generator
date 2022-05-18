@@ -59,10 +59,16 @@ def run(folder):
 
     while True:
         print(json.dumps(images, indent=4, ensure_ascii=False))
-        inp = input("Press enter to shuffle, q and enter to quit or s and enter to save: ")
+        inp = input("Press r to shuffle, o to sort, q to quit or s to save: (enter to confirm) ")
 
-        if inp == "":
+        if inp == "r":
             random.shuffle(images)
+        elif inp == "o":
+            key = input("Enter key for sorting: ")
+            if key.startswith("-"):
+                images.sort(key=lambda x: getattr(x, key.lstrip("-"), ""), reverse=True)
+            else:
+                images.sort(key=lambda x: getattr(x, key, ""))
         elif inp == "q":
             sys.exit()
         elif inp == "s":
