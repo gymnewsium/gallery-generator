@@ -1,6 +1,5 @@
 "Generate gallery index file"
 
-import sys
 import os
 import os.path
 import json
@@ -8,15 +7,24 @@ import random
 import re
 from PIL import Image
 
-def get_img_dimensions(img_path):
+THUMB_SIZE = (512, 512)
+BASEURL = "https://img.gymnewsium.ch/"
+
+def get_img_dimensions(image):
     "Get image dimensions"
 
-    image = Image.open(img_path)
+    width, height = image.size
+    return {"width": width, "height": height, "ratio": width/height}
 
-    w, h = image.size
-    return {"width": w, "height": h, "ratio": w/h}
+def generate_image_thumbnail(image, path):
+    "Generate thumbnail for the image"
 
-def get_file_info(filename):
+    image.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
+    image.save(path, quality=75)
+
+def get_filename_info(filename):
+    "Get author and caption from the filename"
+
     res = re.match(r"([\w ]*) - ([\w\d ]*)(?: - \d*)?\.\w{3,4}", filename).groups()
     author, caption = res
 
@@ -30,32 +38,40 @@ def get_file_info(filename):
     }
 
 def run(folder):
-    "Generate gallery index file for the folder specified"
+    "Generate gallery index file and thumbnails for the folder specified"
 
     if not os.path.exists(folder):
         raise Exception(f"Folder does not exist: {folder}")
 
-    baseurl = "https://img.gymnewsium.ch/"
+    originalfolder = os.path.join(folder, "original")
+    thumbnailfolder = os.path.join(folder, "thumbnail")
+
+    os.makedirs(thumbnailfolder, exist_ok=True)
+    os.makedirs(originalfolder, exist_ok=True)
 
     title = folder.split(os.path.sep)[-1]
     slug = title.lower().replace(" ", "-")
 
-    files = []
+    images = []
 
-    for filename in os.listdir(folder):
+    for filename in os.listdir(originalfolder):
         if not filename.startswith("_") and not filename.startswith("preview"):
             if filename.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
-                imgpath = os.path.join(folder, filename)
-                dimensions = get_img_dimensions(imgpath)
-                files.append((filename, dimensions))
+                originalimgpath = os.path.join(originalfolder, filename)
+                thumbnailimgpath = os.path.join(thumbnailfolder, filename)
 
-    images = [
-        {
-            "url": baseurl+slug+"/"+filename.replace(" ", "%20"),
-            "dimensions": dimensions,
-            **get_file_info(filename),
-        } for filename, dimensions in files
-    ]
+                image = Image.open(originalimgpath)
+                dimensions = get_img_dimensions(image)
+                generate_image_thumbnail(image, thumbnailimgpath)
+
+                images.append(
+                    {
+                        "url": BASEURL+slug+"/original/"+filename.replace(" ", "%20"),
+                        "thumbnailurl": BASEURL+slug+"/thumbnail/"+filename.replace(" ", "%20"),
+                        "dimensions": dimensions,
+                        **get_filename_info(filename),
+                    }
+                )
 
     while True:
         print(json.dumps(images, indent=4, ensure_ascii=False))
@@ -70,19 +86,17 @@ def run(folder):
             else:
                 images.sort(key=lambda x: getattr(x, key, ""))
         elif inp == "q":
-            sys.exit()
-        elif inp == "s":
             break
+        elif inp == "s":
+            data = {
+                "title": title,
+                "images": images,
+            }
 
-    data = {
-        "title": title,
-        "images": images,
-    }
+            raw = json.dumps(data, indent=4, ensure_ascii=False)
 
-    raw = json.dumps(data, indent=4, ensure_ascii=False)
-
-    with open(folder+os.path.sep+"index.json", "w+", encoding="utf-8") as file:
-        file.write(raw)
+            with open(folder+os.path.sep+"index.json", "w+", encoding="utf-8") as file:
+                file.write(raw)
 
 
 if __name__ == "__main__":
