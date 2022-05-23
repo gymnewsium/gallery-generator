@@ -16,11 +16,23 @@ def get_img_dimensions(image):
     width, height = image.size
     return {"width": width, "height": height, "ratio": width/height}
 
-def generate_image_thumbnail(image, path):
+def fix_image_rotation(image):
+    orientation = dict(image.getexif().items())[274]
+
+    if orientation == 3:
+        image = image.rotate(180, expand=True)
+    elif orientation == 6:
+        image = image.rotate(270, expand=True)
+    elif orientation == 8:
+        image = image.rotate(90, expand=True)
+    return image
+
+def get_image_thumbnail(image):
     "Generate thumbnail for the image"
 
-    image.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
-    image.save(path, quality=75)
+    thumb = image.copy()
+    thumb.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
+    return thumb
 
 def get_filename_info(filename):
     "Get author and caption from the filename"
@@ -40,13 +52,17 @@ def get_filename_info(filename):
 def run(folder):
     "Generate gallery index file and thumbnails for the folder specified"
 
+    print("Started generating...")
+
     if not os.path.exists(folder):
         raise Exception(f"Folder does not exist: {folder}")
 
     originalfolder = os.path.join(folder, "original")
+    imagefolder = os.path.join(folder, "image")
     thumbnailfolder = os.path.join(folder, "thumbnail")
 
     os.makedirs(thumbnailfolder, exist_ok=True)
+    os.makedirs(imagefolder, exist_ok=True)
     os.makedirs(originalfolder, exist_ok=True)
 
     title = folder.split(os.path.sep)[-1]
@@ -58,15 +74,20 @@ def run(folder):
         if not filename.startswith("_") and not filename.startswith("preview"):
             if filename.split(".")[-1].lower() in ["jpeg", "jpg", "png"]:
                 originalimgpath = os.path.join(originalfolder, filename)
+                imageimgpath = os.path.join(imagefolder, filename)
                 thumbnailimgpath = os.path.join(thumbnailfolder, filename)
 
                 image = Image.open(originalimgpath)
+                image = fix_image_rotation(image)
                 dimensions = get_img_dimensions(image)
-                generate_image_thumbnail(image, thumbnailimgpath)
+                image.save(imageimgpath, optimize=True, quality=75)
+
+                thumbnail = get_image_thumbnail(image)
+                thumbnail.save(thumbnailimgpath, optimize=True, quality=75)
 
                 images.append(
                     {
-                        "url": BASEURL+slug+"/original/"+filename.replace(" ", "%20"),
+                        "url": BASEURL+slug+"/image/"+filename.replace(" ", "%20"),
                         "thumbnailurl": BASEURL+slug+"/thumbnail/"+filename.replace(" ", "%20"),
                         "dimensions": dimensions,
                         **get_filename_info(filename),
