@@ -5,6 +5,7 @@ import os
 import os.path
 import json
 import random
+import re
 from PIL import Image
 
 def get_img_dimensions(img_path):
@@ -16,9 +17,8 @@ def get_img_dimensions(img_path):
     return {"width": w, "height": h, "ratio": w/h}
 
 def get_file_info(filename):
-    sp = filename.split(" - ")
-    author = sp[0]
-    caption = sp[1].split(".")[0]
+    res = re.match(r"([\w ]*) - ([\w\d ]*)(?: - \d*)?\.\w{3,4}", filename).groups()
+    author, caption = res
 
     if caption.isdigit():
         return {
