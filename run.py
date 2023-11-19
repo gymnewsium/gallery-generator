@@ -8,7 +8,7 @@ import re
 from PIL import Image
 
 THUMB_SIZE = (512, 512)
-BASEURL = "https://img.gymnewsium.ch/"
+BASEURL = "https://gymnewsium.github.io/gallery/"
 
 def get_img_dimensions(image):
     "Get image dimensions"
